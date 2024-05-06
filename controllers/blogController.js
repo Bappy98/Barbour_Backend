@@ -1,5 +1,5 @@
 const asyncHandler = require("express-async-handler");
-const Blog = require("../model/spotloghtBlog");
+const Blog = require("../model/healthySpotlight");
 
 // Create a new blog post
 const createBlog = asyncHandler(async (req, res) => {
@@ -7,10 +7,8 @@ const createBlog = asyncHandler(async (req, res) => {
     const newBlog = new Blog({
       creator: req.body.creator,
       title: req.body.title,
-      body: req.body.body,
+      details: req.body.details,
       image: req.body.image,
-      category: req.body.category,
-      tags: req.body.tags,
       status: req.body.status,
     });
 
@@ -31,13 +29,14 @@ const getAllBlogs = asyncHandler(async (req, res) => {
   try {
     const blogs = await Blog.find({});
     res.json({
-      message: "Successfully retrieved all blogs",
+      message: "Successfully retrieved all healthy Spotlight",
       data: blogs,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error retrieving blogs", error: error.message });
+    res.status(500).json({
+      message: "Error retrieving healthy Spotlight",
+      error: error.message,
+    });
   }
 });
 
@@ -46,14 +45,15 @@ const getBlogById = asyncHandler(async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
     if (!blog) {
-      res.status(404).json({ message: "Blog not found" });
+      res.status(404).json({ message: "healthy Spotlight not found" });
     } else {
       res.json(blog);
     }
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error finding blog", error: error.message });
+    res.status(500).json({
+      message: "Error finding healthy Spotlight",
+      error: error.message,
+    });
   }
 });
 
@@ -62,15 +62,13 @@ const updateBlog = asyncHandler(async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
     if (!blog) {
-      res.status(404).json({ message: "Blog not found" });
+      res.status(404).json({ message: "healthy Spotlight not found" });
       return;
     }
 
     blog.title = req.body.title || blog.title;
-    blog.body = req.body.body || blog.body;
+    blog.details = req.body.details || blog.details;
     blog.image = req.body.image || blog.image;
-    blog.category = req.body.category || blog.category;
-    blog.tags = req.body.tags || blog.tags;
     blog.status = req.body.status || blog.status;
 
     const updatedBlog = await blog.save();
