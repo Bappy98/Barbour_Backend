@@ -1,5 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const Training = require("./../model/training");
+const TrainingDetails = require("./../model/trainingDetails");
 
 const createTraining = asyncHandler(async (req, res) => {
   const { title, details, image } = req.body;
@@ -24,7 +25,7 @@ const createTraining = asyncHandler(async (req, res) => {
 
 const getAllTraining = asyncHandler(async (req, res) => {
   try {
-    const training = await Training.find({});
+    const training = await Training.find({}).populate("pageDetails");
     res.json({
       message: "Successfully retrieved all Training",
       data: training,
@@ -90,71 +91,67 @@ const deleteTraining = asyncHandler(async (req, res) => {
   }
 });
 const addPageInfo = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const { title, image, details } = req.body;
-
   try {
-    const training = await Training.findById(id);
-    if (!training) {
-      return res.status(404).json({ error: "Training not found" });
-    }
+    const { title, body, page_id, image } = req.body;
+    const page_details = new TrainingDetails({
+      title,
+      body,
+      page_id,
+      image,
+    });
 
-    // Assuming 'pageDetails' is an array field in your schema
-    training.pageDetails.push({ title, image, details });
+    await page_details.save();
 
-    // Save the updated service
-    await training.save();
+    await Training.findByIdAndUpdate(page_id, {
+      $push: { pageDetails: page_details._id },
+    });
 
-    res.json({ message: "Page info added successfully", training });
+    // Send response
+    res.status(201).json(page_details);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Failed to add page info", error: error.message });
+    res.status(500).json({ error: error.message });
   }
 });
 
-const updatePageInfo = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const { title, image, details } = req.body;
-  const pageDetails = { title, image, details };
+const deletePageInfoById = asyncHandler(async (req, res) => {
   try {
-    const training = await Training.findById(id);
+    const pageInfoId = req.params.id;
+    const deletePageInfo = await TrainingDetails.findByIdAndDelete(pageInfoId);
 
-    if (!training) {
-      return res.status(404).json({ error: "training not found" });
+    if (!deletePageInfo) {
+      return res.status(404).json({ error: "Page info not found" });
     }
-    training.pageDetails = { ...training.pageDetails, ...pageDetails };
-
-    // Save the updated service
-    await training.save();
-    res.json({ message: "Page details updated successfully", training });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Failed to update page details", message: error.message });
-  }
-});
-
-const deletePageInfo = asyncHandler(async (req, res) => {
-  const id = req.params.id;
-  try {
-    const training = await Services.findById(id);
-
-    if (!training || !training.page_details) {
-      return res.status(404).json({ error: "Page details not found" });
-    }
-
-    // Remove the page_details field
-    training.page_details = undefined;
-
-    // Save the updated service
-    await training.save();
-
+    await Training.updateOne(
+      { pageDetails: pageInfoId },
+      { $pull: { pageDetails: pageInfoId } }
+    );
     res.sendStatus(204);
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+const updatePageInfo = asyncHandler(async (req, res) => {
+  const { title, body, image } = req.body;
+  try {
+    const item = await TrainingDetails.findById(req.params.id);
+    if (!item) {
+      res.status(404).json({ message: "Service Page details not found" });
+      return;
+    }
+    item.title = title || item.title;
+    item.body = body || item.body;
+    item.image = image || item.image;
+
+    const updatePageInfo = await TrainingDetails.save();
+
+    res.json({
+      message: "Service updated successfully",
+      data: updatePageInfo,
+    });
+  } catch (error) {
     res
-      .status(500)
-      .json({ error: "Failed to delete page details", message: error.message });
+      .status(400)
+      .json({ message: "Failed to update services", error: error.message });
   }
 });
 
@@ -166,5 +163,5 @@ module.exports = {
   getAllTraining,
   addPageInfo,
   updatePageInfo,
-  deletePageInfo,
+  deletePageInfoById,
 };

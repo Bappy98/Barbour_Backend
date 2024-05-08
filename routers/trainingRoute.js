@@ -6,7 +6,7 @@ const {
   deleteTraining,
   addPageInfo,
   updatePageInfo,
-  deletePageInfo,
+  deletePageInfoById,
   trainingById,
 } = require("../controllers/trainingController");
 const { IsSupperAdmin, protect } = require("../middleware/auth");
@@ -21,8 +21,10 @@ router
   .put(protect, IsSupperAdmin, updateTraining)
   .delete(protect, IsSupperAdmin, deleteTraining);
 router
-  .route("/training/:id/page_details")
-  .post(protect, IsSupperAdmin, addPageInfo)
+  .route("/training/page_details")
+  .post(protect, IsSupperAdmin, addPageInfo);
+router
+  .route("/training/page_details/:id")
   .put(protect, IsSupperAdmin, updatePageInfo)
-  .delete(protect, IsSupperAdmin, deletePageInfo);
+  .delete(protect, IsSupperAdmin, deletePageInfoById);
 module.exports = router;

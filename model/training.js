@@ -16,25 +16,12 @@ const trainingSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
   },
-  pageDetails: {
-    type: Array,
-    items: {
-      type: Object,
-      properties: {
-        title: {
-          type: String,
-          required: true,
-        },
-        details: {
-          type: String,
-          required: true,
-        },
-        image: {
-          type: String,
-        },
-      },
+  pageDetails: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "TrainingDetails",
     },
-  },
+  ],
 });
 
-module.exports = mongoose.model("trainingSchema", trainingSchema);
+module.exports = mongoose.model("TrainingSchema", trainingSchema);

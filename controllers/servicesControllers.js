@@ -1,13 +1,15 @@
 const asyncHandler = require("express-async-handler");
 const Services = require("./../model/services");
+const ServicePageDetails = require("./../model/pageDetails");
 
 const createServices = asyncHandler(async (req, res) => {
-  const { title, body, image } = req.body;
+  const { title, body, image, details } = req.body;
   try {
     const newServices = new Services({
       title,
       image,
       body,
+      details,
     });
     const data = await newServices.save();
     res.status(201).json({
@@ -24,7 +26,7 @@ const createServices = asyncHandler(async (req, res) => {
 
 const getAllServices = asyncHandler(async (req, res) => {
   try {
-    const services = await Services.find({});
+    const services = await Services.find({}).populate("pageDetails");
     res.json({
       message: "Successfully retrieved all services",
       data: services,
@@ -52,7 +54,7 @@ const servicesById = asyncHandler(async (req, res) => {
 });
 
 const updateServices = asyncHandler(async (req, res) => {
-  const { title, body, image } = req.body;
+  const { title, body, image, details } = req.body;
   try {
     const item = await Services.findById(req.params.id);
     if (!item) {
@@ -62,6 +64,7 @@ const updateServices = asyncHandler(async (req, res) => {
     item.title = title || item.title;
     item.body = body || item.body;
     item.image = image || item.image;
+    item.details = details || item.details;
 
     const updateService = await Services.save();
 
@@ -89,72 +92,71 @@ const deleteService = asyncHandler(async (req, res) => {
       .json({ message: "Failed to delete Service", error: error.message });
   }
 });
+
 const addPageInfo = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const { title, image, body, tags } = req.body;
-
   try {
-    const service = await Services.findById(id);
-    if (!service) {
-      return res.status(404).json({ error: "Service not found" });
-    }
+    const { title, body, page_id, image } = req.body;
+    const page_details = new ServicePageDetails({
+      title,
+      body,
+      page_id,
+      image,
+    });
 
-    // Assuming 'pageDetails' is an array field in your schema
-    service.pageDetails.push({ title, image, body, tags });
+    await page_details.save();
 
-    // Save the updated service
-    await service.save();
+    await Services.findByIdAndUpdate(page_id, {
+      $push: { pageDetails: page_details._id },
+    });
 
-    res.json({ message: "Page info added successfully", service });
+    // Send response
+    res.status(201).json(page_details);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Failed to add page info", error: error.message });
+    res.status(500).json({ error: error.message });
   }
 });
 
-const updatePageInfo = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const { title, image, body, tags } = req.body;
-  const pageDetails = { title, image, body, tags };
+const deletePageInfoById = asyncHandler(async (req, res) => {
   try {
-    const service = await Services.findById(id);
+    const pageInfoId = req.params.id;
+    const deletePageInfo = await ServicePageDetails.findByIdAndDelete(
+      pageInfoId
+    );
 
-    if (!service) {
-      return res.status(404).json({ error: "Service not found" });
+    if (!deletePageInfo) {
+      return res.status(404).json({ error: "Page info not found" });
     }
-    service.pageDetails = { ...service.pageDetails, ...pageDetails };
-
-    // Save the updated service
-    await service.save();
-    res.json({ message: "Page details updated successfully", service });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Failed to update page details", message: error.message });
-  }
-});
-
-const deletePageInfo = asyncHandler(async (req, res) => {
-  const id = req.params.id;
-  try {
-    const service = await Services.findById(id);
-
-    if (!service || !service.page_details) {
-      return res.status(404).json({ error: "Page details not found" });
-    }
-
-    // Remove the page_details field
-    service.page_details = undefined;
-
-    // Save the updated service
-    await service.save();
-
+    await Services.updateOne(
+      { pageDetails: pageInfoId },
+      { $pull: { pageDetails: pageInfoId } }
+    );
     res.sendStatus(204);
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+const updatePageInfo = asyncHandler(async (req, res) => {
+  const { title, body, image } = req.body;
+  try {
+    const item = await ServicePageDetails.findById(req.params.id);
+    if (!item) {
+      res.status(404).json({ message: "Service Page details not found" });
+      return;
+    }
+    item.title = title || item.title;
+    item.body = body || item.body;
+    item.image = image || item.image;
+
+    const updatePageInfo = await ServicePageDetails.save();
+
+    res.json({
+      message: "Service updated successfully",
+      data: updatePageInfo,
+    });
+  } catch (error) {
     res
-      .status(500)
-      .json({ error: "Failed to delete page details", message: error.message });
+      .status(400)
+      .json({ message: "Failed to update services", error: error.message });
   }
 });
 
@@ -165,6 +167,6 @@ module.exports = {
   updateServices,
   deleteService,
   addPageInfo,
+  deletePageInfoById,
   updatePageInfo,
-  deletePageInfo,
 };

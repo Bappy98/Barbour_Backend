@@ -9,34 +9,18 @@ const servicesSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  details:{
+    type:String,
+  },
   image: {
     type: String,
   },
-  pageDetails: {
-    type: Array,
-    items: {
-      type: Object,
-      properties: {
-        title: {
-          type: String,
-          required: true,
-        },
-        body: {
-          type: String,
-          required: true,
-        },
-        image: {
-          type: String,
-        },
-        tags: {
-          type: Array,
-          items: {
-            type: String,
-          },
-        },
-      },
-    },
-  },
+  pageDetails: [
+    {
+      type:mongoose.Schema.Types.ObjectId,
+      ref:"ServicePageDetails"
+    }
+  ]
 });
 
-module.exports = mongoose.model("serviceSchema", servicesSchema);
+module.exports = mongoose.model("ServiceSchema", servicesSchema);

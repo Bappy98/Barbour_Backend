@@ -6,8 +6,9 @@ const {
   updateServices,
   deleteService,
   addPageInfo,
+  deletePageInfoById,
   updatePageInfo,
-  deletePageInfo,
+  
 } = require("../controllers/servicesControllers");
 const { IsSupperAdmin, protect } = require("../middleware/auth");
 
@@ -21,8 +22,10 @@ router
   .put(protect, IsSupperAdmin, updateServices)
   .delete(protect, IsSupperAdmin, deleteService);
 router
-  .route("/services/:id/page_details")
+  .route("/services/page_details")
   .post(protect, IsSupperAdmin, addPageInfo)
-  .put(protect, IsSupperAdmin, updatePageInfo)
-  .delete(protect, IsSupperAdmin, deletePageInfo);
+router.route("/services/page_details/:id")
+.delete(protect,IsSupperAdmin,deletePageInfoById)
+.put(protect,IsSupperAdmin,updatePageInfo)
+ 
 module.exports = router;
