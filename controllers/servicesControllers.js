@@ -66,7 +66,7 @@ const updateServices = asyncHandler(async (req, res) => {
     item.image = image || item.image;
     item.details = details || item.details;
 
-    const updateService = await Services.save();
+    const updateService = await item.save();
 
     res.json({
       message: "Service updated successfully",
@@ -147,7 +147,7 @@ const updatePageInfo = asyncHandler(async (req, res) => {
     item.body = body || item.body;
     item.image = image || item.image;
 
-    const updatePageInfo = await ServicePageDetails.save();
+    const updatePageInfo = await item.save();
 
     res.json({
       message: "Service updated successfully",
