@@ -55,5 +55,53 @@ const getAllUsers = asyncHandler(async (req, res) => {
     console.log(error);
   }
 });
+const findById = asyncHandler(
+  asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.id);
+    if (user) {
+      res.json(user);
+    } else {
+      res.status(404).json({ message: "User not found" });
+    }
+  })
+);
 
-module.exports = { Login, Registration, getAllUsers };
+// Delete single user
+const deleteUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (user) {
+    await user.remove();
+    res.json({ message: "User deleted successfully" });
+  } else {
+    res.status(404).json({ message: "User not found" });
+  }
+});
+// Update single user
+const updateUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (user) {
+    user.email = req.body.email || user.email;
+    user.firstName = req.body.firstName || user.firstName;
+    user.lastName = req.body.lastName || user.lastName;
+    if (req.body.password) {
+      user.password = req.body.password;
+    }
+
+    const updatedUser = await user.save();
+    res.json({
+      message: "User updated successfully",
+      data: updatedUser,
+    });
+  } else {
+    res.status(404).json({ message: "User not found" });
+  }
+});
+
+module.exports = {
+  Login,
+  Registration,
+  getAllUsers,
+  updateUser,
+  deleteUser,
+  findById,
+};
